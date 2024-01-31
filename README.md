@@ -35,7 +35,7 @@ services:
 after deploying the containers, you can access the web interface at `http://localhost:3231`.
 
 ### Binaries
-You can download the latest static binaries from the [releases page](https://github.com/ngn13/massacr/releases).
+You can download the latest static binaries from the [releases page](https://github.com/ngn13/massacr/releases/latest).
 
 ### From the source
 Another way to deploy these two applications, is to build them from the source.
