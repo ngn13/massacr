@@ -17,13 +17,13 @@ The project contains a scanner and a simple database with a web interface. Easie
 version: "3"
 services:
   scanner:
-    image: ghcr.io/ngn13/massacr_scanner
+    image: ghcr.io/ngn13/massacr/scanner
     command: --url=http://database:3231 --pwd=securepassword --limit=100
     depends_on:
       - database
 
   database:
-    image: ghcr.io/ngn13/massacr_database
+    image: ghcr.io/ngn13/massacr/database
     restart: unless-stopped
     environment:
       - PASSWORD=securepassword

@@ -25,9 +25,9 @@ jobs:
       - name: 'Build Inventory Image'
         run: |
           cd scanner 
-          docker build . --tag ghcr.io/ngn13/massacr_scanner:latest
-          docker push ghcr.io/ngn13/massacr_scanner:latest
+          docker build . --tag ghcr.io/ngn13/massacr/scanner:latest
+          docker push ghcr.io/ngn13/massacr/scanner:latest
           
           cd ../database
-          docker build . --tag ghcr.io/ngn13/massacr_database:latest
-          docker push ghcr.io/ngn13/massacr_database:latest
+          docker build . --tag ghcr.io/ngn13/massacr/database:latest
+          docker push ghcr.io/ngn13/massacr/database:latest
