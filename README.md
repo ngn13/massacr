@@ -1,11 +1,17 @@
-# massacr 🩸 mass IP/port scanner
+<h3 align="center">
+  massacr 🩸 mass IP/port scanner
+  </br>
+  A tool for scanning the internet for TCP ports using SYN packets
+  </br>
+  </br>
+  <img src="assets/web.png">
+</h3>
 
-![](/assets/web.png)
-a tool for scanning the internet for TCP ports 
+---
 
-## deploy
-### docker
-the project contains a scanner and a simple database with a web interface, easiest way to deploy these to is to use 
+## Deploy
+### Docker
+The project contains a scanner and a simple database with a web interface. Easiest way to deploy these to is to use 
 `docker-compose`, here is an example configuration:
 ```yml
 version: "3"
@@ -28,36 +34,36 @@ services:
 ```
 after deploying the containers, you can access the web interface at `http://localhost:3231`.
 
-### binaries
-you can download the latest static binaries from the [releases page](https://github.com/ngn13/massacr/releases)
+### Binaries
+You can download the latest static binaries from the [releases page](https://github.com/ngn13/massacr/releases).
 
-### from the source
-another way to deploy these two applications, is to build them from the source.
-- first install all the dependencies and build tools: 
+### From the source
+Another way to deploy these two applications, is to build them from the source.
+- First install all the dependencies and build tools: 
 ```bash
 build-esssential libnet libnet-dev curl curl-dev go
 ```
-- then clone the repository: 
+- Then clone the repository: 
 ```bash
 git clone https://github.com/ngn13/massacr.git
 ```
-- now change directory into the database and run the go build command:
+- Now change directory into the database and run the go build command:
 ```bash
 cd massacr/database && go build .
 ```
-- now change directory into the scanner and run the make command:
+- Now change directory into the scanner and run the make command:
 ```bash 
 cd ../scanner && make
 ```
 
-## configuration
-### database 
-all the configuration options for the database are set using environment variables:
+## Configuration
+### Database 
+All the configuration options for the database are set using environment variables:
 - `PASSWORD`: password, default is `default`
 - `PORT`: port for the web server, default is `3231`
 
-### scanner 
-you can list all the options with `--help`:
+### Scanner 
+You can list all the options with `--help`:
 ```
 --no-color => Do not print colored output
 --recvport => Source port for TCP packets
@@ -69,15 +75,15 @@ you can list all the options with `--help`:
 --pwd      => Database password
 ```
 
-- options are set using the `--<option>=<value>` syntax
-- for the `--ports` option, you can specify a single port, or you can specify ranges with `-` (`1-100`) and multiple ports with `,` (`80,443,1234`)
-- timeout is the to wait after sending all the packets, as the receiver thread may fell behind
+- Options are set using the `--<option>=<value>` syntax
+- For the `--ports` option, you can specify a single port, or you can specify ranges with `-` (`1-100`) and multiple ports with `,` (`80,443,1234`)
+- Timeout is the to wait after sending all the packets, as the receiver thread may fell behind
 - `--limit` is set to 20 by default, **which is pretty slow, so you should increase it**
 
 > [!CAUTION]
 > DO NOT go overkill on the `--limit` option, you will most likely end up using all the bandwidth and crash the entire network
 
-defaults for all the options are:
+Defaults for all the options are:
 ```
 no-color => false
 recvport => 13421
@@ -89,6 +95,8 @@ url      => http://localhost:3231
 pwd      => default
 ```
 
-## resources 
+---
+
+## Resources 
 - [SYN scanning](https://nmap.org/book/synscan.html) (massacr does not exactly use SYN scan, it does not send RST packets)
 - [libnet](https://github.com/libnet/libnet)
