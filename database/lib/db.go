@@ -45,15 +45,23 @@ func Save() bool{
     return false
   }
 
-  err = os.WriteFile("data.json", dbstr, 0666)
+  err = os.Mkdir("data", os.ModePerm)
+  if err != nil && !os.IsExist(err) {
+    log.Printf("Cannot create the data directory")
+    return false
+  }
+
+  err = os.WriteFile("data/data.json", dbstr, 0666)
   if err != nil {
     log.Printf("Failed to save database: %s", err)
+    return false
   }
+
   return true
 }
 
 func Load() bool {
-  dbstr, err := os.ReadFile("data.json")
+  dbstr, err := os.ReadFile("data/data.json")
   if os.IsNotExist(err) {
     Db = Data{}
     return true 

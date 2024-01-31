@@ -23,7 +23,7 @@ bool receive(struct ThreadArgs* args){
   uint addrlen = sizeof(addr);
 
   char buff[
-    sizeof(struct tcphdr)+sizeof(struct iphdr)
+    sizeof(struct tcphdr_)+sizeof(struct iphdr)
   ] = {0}; 
 
   info("Started receiver on port %d", args->port);
@@ -34,7 +34,7 @@ bool receive(struct ThreadArgs* args){
     if(res <= 0)
       continue;
     
-    struct tcphdr* tcph = (struct tcphdr*)(buff+sizeof(struct iphdr));
+    struct tcphdr_* tcph = (struct tcphdr_*)(buff+sizeof(struct iphdr));
     if(tcph->ack != 1 || tcph->syn != 1 || tcph->rst == 1)
       continue;
   

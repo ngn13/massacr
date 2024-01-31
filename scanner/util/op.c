@@ -15,8 +15,8 @@ struct Option options[] = {
   {.name="ports",       .type=TYPE_STR,     .value="common",                  .desc="Ports to scan for"},
   {.name="limit",       .type=TYPE_INT,     .value="20",                      .desc="Packets per second limit"},
   {.name="debug",       .type=TYPE_BOOL,    .value="false",                   .desc="Enable debug output"},
-  {.name="url",         .type=TYPE_STR,     .value="http://localhost:3231",   .desc="SQLite database path"},
-  {.name="pwd",         .type=TYPE_STR,     .value="default",                 .desc="SQLite database path"},
+  {.name="url",         .type=TYPE_STR,     .value="http://localhost:3231",   .desc="Database HTTP(S) URL"},
+  {.name="pwd",         .type=TYPE_STR,     .value="default",                 .desc="Database password"},
 };
 
 char* extract_value(char* o) {

@@ -18,6 +18,7 @@ func main(){
     return
   }
 
+  app.Static("/", "static")
   app.Use(cors.New(cors.Config{
     AllowOrigins: "*",
     AllowHeaders: "*",
