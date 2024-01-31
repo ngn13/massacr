@@ -1,6 +1,6 @@
 # massacr 🩸 mass IP/port scanner
 
-![](/assets/showcase.png)
+![](/assets/web.png)
 a tool for scanning the internet for TCP ports 
 
 ## deploy
