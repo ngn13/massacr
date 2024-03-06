@@ -1,11 +1,11 @@
-<h3 align="center">
+<h2 align="center">
   massacr 🩸 mass IP/port scanner
   </br>
   a tool for scanning the entire internet
   </br>
   </br>
   <img src="assets/web.png">
-</h3>
+</h2>
 
 ---
 
