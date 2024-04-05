@@ -55,9 +55,8 @@ class API:
        
         if not port in found["ports"]:
             col.update_one({"ipv4": ip}, {"$push": {"ports": port}})
-
-        if len(extra.keys()) != 0:
-            col.update_one({"ipv4": ip}, {"$push": {"data": extra}})
+            if len(extra.keys()) != 0:
+                col.update_one({"ipv4": ip}, {"$push": {"data": extra}})
 
     def set_handler(self, func):
         self.handler = func
