@@ -27,6 +27,7 @@ services:
     image: ghcr.io/ngn13/massacr/api
     restart: unless-stopped
     environment:
+      - API_PASSWORD=default
       - API_MONGO=mongodb://mongo
     depends_on:
       - mongo
