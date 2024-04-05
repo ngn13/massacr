@@ -1,9 +1,8 @@
 FROM alpine
 
-RUN apk update && apk upgrade
 RUN apk add --no-cache build-base libnet curl libnet-dev curl-dev
 
-WORKDIR /app
+WORKDIR /scanner
 
 COPY *.c      ./
 COPY Makefile ./
@@ -12,4 +11,4 @@ COPY util     ./util
 
 RUN make
 
-ENTRYPOINT ["/app/massacr"] 
+ENTRYPOINT ["/scanner/massacr"] 

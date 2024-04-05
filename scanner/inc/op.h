@@ -1,8 +1,5 @@
 #pragma once
-#include <stdio.h>
 #include <errno.h>
-#include <string.h>
-#include <stdint.h>
 #include <stdbool.h>
 
 #include "../inc/log.h"
@@ -14,16 +11,16 @@
 #define TYPE_INT 3
 
 struct Option {
-  char* value;
-  char* name;
-  char* desc;
+  char *value;
+  char *name;
+  char *desc;
   int type;
 };
 
 extern struct Option options[];
-char* extract_value(char*);
-bool parse_opt(char*);
-bool get_bool(char*);
-char* get_str(char*);
-int get_int(char*);
+char *extract_value(char *);
+bool parse_opt(char *);
+bool get_bool(char *);
+char *get_str(char *);
+int get_int(char *);
 void print_opts();

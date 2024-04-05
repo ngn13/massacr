@@ -12,4 +12,7 @@ install:
 uninstall:
 	rm -v $(DESTDIR)$(prefix)/bin/massacr
 
-.PHONY: install uninstall
+format:
+	clang-format -i -style=file ./*.c ./*/*.c ./*/*.h
+
+.PHONY: install uninstall format
