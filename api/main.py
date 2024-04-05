@@ -33,7 +33,7 @@ def http_handler(ip, port):
 if __name__ == "__main__":
     mongo_url = environ["API_MONGO"] if "API_MONGO" in environ else "mongodb://localhost"
     password  = environ["API_PASSWORD"] if "API_PASSWORD" in environ else "default"
-    host      = "127.0.0.1" if "API_USE_LOCAL" in environ else "0.0.0.0"
+    host      = "127.0.0.1" if "API_USE_LOCAL" in environ and environ["API_USE_LOCAL"] == "1" else "0.0.0.0"
     port      = 5000
 
     # creating the API

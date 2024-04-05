@@ -86,7 +86,7 @@ password => default
 Default API has few different options:
 - `API_MONGO`: MongoDB URL
 - `API_PASSWORD`: Password for API access
-- `API_USE_LOCAL`: Set to any value if you want API to listen only on the local interface (127.0.0.1)
+- `API_USE_LOCAL`: Set to 1 if you want API to listen only on the local interface (127.0.0.1)
 
 However you can modify these options and the handler itself by modifying [`api/main.py`](api/main.py).
 If you know a bit of python you can easily write your own handler for your specific use case. All the code 
