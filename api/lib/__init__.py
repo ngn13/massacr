@@ -23,6 +23,7 @@ from pymongo.mongo_client import MongoClient
 from flask import Flask, request
 from threading import Thread 
 import logging as log
+VERSION = "1.2"
 
 class API:
     def __init__(self, mongo_url: str, password: str, host: str, port: int) -> None:
@@ -69,6 +70,7 @@ class API:
             log.critical(f"Database connection failed: {e}")
             exit(1)
 
+        log.info(f"massacr API {VERSION} (https://github.com/ngn13/massacr)")
         log.info(f"Starting API server on {self.host}:{self.port}")
         self.app.run(host=self.host, port=self.port)
 

@@ -1,10 +1,11 @@
 HEADERS = $(wildcard inc/*.h)
-CSRCS = $(wildcard *.c) $(wildcard */*.c)
-prefix = /usr
-CC = gcc
+CSRCS   = $(wildcard *.c) $(wildcard */*.c)
+VERSION = 1.2
+prefix  = /usr
+CC      = gcc
 
 massacr: $(CSRCS) $(HEADERS)
-	$(CC) $(CFLAGS) $(CSRCS) -o $@ -lnet -lcurl 
+	$(CC) $(CFLAGS) $(CSRCS) -o $@ -DVERSION=\"${VERSION}\" -lnet -lcurl 
 
 install:
 	install -v -m755 massacr $(DESTDIR)$(prefix)/bin/massacr 

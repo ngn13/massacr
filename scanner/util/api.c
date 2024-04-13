@@ -1,5 +1,6 @@
 #include "../inc/api.h"
 #include "../inc/log.h"
+#include "../inc/util.h"
 
 #include <curl/curl.h>
 #include <stdbool.h>
