@@ -8,8 +8,8 @@ struct tcphdr_ {
     struct {
       uint16_t th_sport; /* source port */
       uint16_t th_dport; /* destination port */
-      tcp_seq th_seq;    /* sequence number */
-      tcp_seq th_ack;    /* acknowledgement number */
+      tcp_seq  th_seq;   /* sequence number */
+      tcp_seq  th_ack;   /* acknowledgement number */
 #if __BYTE_ORDER == __LITTLE_ENDIAN
       uint8_t th_x2 : 4;  /* (unused) */
       uint8_t th_off : 4; /* data offset */
@@ -64,11 +64,15 @@ struct tcphdr_ {
   };
 };
 
-typedef struct RecvArgs {
+typedef struct net_recv_args {
   uint16_t port;
-  bool should_run;
+  bool     should_run;
+  int      threads;
 } recv_args_t;
 
 extern pthread_mutex_t net_lock;
-bool net_syn(char *, int, int);
-bool net_receive(void *);
+
+bool net_init();
+void net_free();
+bool net_syn(uint32_t, int, int);
+void net_receive(void *);

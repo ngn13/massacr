@@ -9,38 +9,14 @@
 #include "../inc/util.h"
 
 option_t options[] = {
-    {.name = "no-color",
-     .type = TYPE_BOOL,
-     .value = "false",
-     .desc = "Do not print colored output"},
-    {.name = "recvport",
-     .type = TYPE_INT,
-     .value = "13421",
-     .desc = "Source port for TCP packets"},
-    {.name = "timeout",
-     .type = TYPE_INT,
-     .value = "10",
-     .desc = "Timeout for receiver thread"},
-    {.name = "ports",
-     .type = TYPE_STR,
-     .value = "common",
-     .desc = "Ports to scan for"},
-    {.name = "limit",
-     .type = TYPE_INT,
-     .value = "20",
-     .desc = "Packets per second limit"},
-    {.name = "debug",
-     .type = TYPE_BOOL,
-     .value = "false",
-     .desc = "Enable debug output"},
-    {.name = "url",
-     .type = TYPE_STR,
-     .value = "http://localhost:5000",
-     .desc = "API HTTP(S) URL"},
-    {.name = "password",
-     .type = TYPE_STR,
-     .value = "default",
-     .desc = "API password"},
+    {.name = "no-color", .type = TYPE_BOOL, .value = "false",                     .desc = "Do not print colored output"},
+    {.name = "recvport", .type = TYPE_INT,  .value = "1337",                      .desc = "Source port for TCP packets"},
+    {.name = "timeout",  .type = TYPE_INT,  .value = "600",                       .desc = "Timeout for receiver thread"},
+    {.name = "ports",    .type = TYPE_STR,  .value = "common",                    .desc = "Ports to scan for"          },
+    {.name = "limit",    .type = TYPE_INT,  .value = "20",                        .desc = "Packets per second limit"   },
+    {.name = "debug",    .type = TYPE_BOOL, .value = "false",                     .desc = "Enable debug output"        },
+    {.name = "mongo",    .type = TYPE_STR,  .value = "mongodb://localhost:27017", .desc = "MongoDB URL"                },
+    {.name = "threads",  .type = TYPE_INT,  .value = "10",                        .desc = "Database thread count"      },
 };
 
 char *extract_value(char *o) {
@@ -68,17 +44,13 @@ void print_opts() {
       spacebuf[i] = ' ';
     spacebuf[sizeof(spacebuf) - 1] = '\0';
 
-    if (get_bool("no-color")) {
-      printf(SPACE "%s%s=> %s\n", options[i].name, spacebuf, options[i].value);
-      continue;
-    }
-
     if (options[i].type == TYPE_BOOL)
-      printf(SPACE BOLD "%s" RESET "%s=> %s\n" RESET, options[i].name, spacebuf,
-             get_bool(options[i].name) ? GREEN "true" : RED "false");
+      printf(FG_BOLD "    %s" FG_RESET "%s=> %s\n" FG_RESET,
+          options[i].name,
+          spacebuf,
+          get_bool(options[i].name) ? FG_GREEN "true" : FG_RED "false");
     else
-      printf(SPACE BOLD "%s" RESET "%s=> %s\n" RESET, options[i].name, spacebuf,
-             options[i].value);
+      printf(FG_BOLD "    %s" FG_RESET "%s=> %s\n" FG_RESET, options[i].name, spacebuf, options[i].value);
   }
 }
 
@@ -110,7 +82,6 @@ char *get_str(char *name) {
 }
 
 void print_help() {
-  info("massacr scanner %s (https://github.com/ngn13/massacr)", VERSION);
   info("Listing available options:");
 
   int max_len = 0;
@@ -120,50 +91,21 @@ void print_help() {
   }
 
   for (int i = 0; i < sizeof(options) / sizeof(option_t); i++) {
-    char spacebuf[(max_len - strlen(options[i].name)) + 2];
-    for (int i = 0; i < sizeof(spacebuf); i++)
-      spacebuf[i] = ' ';
-    spacebuf[sizeof(spacebuf) - 1] = '\0';
+    int  spacesz = (max_len - strlen(options[i].name)) + 2;
+    char spacebuf[spacesz];
 
-    if (get_bool("no-color")) {
-      printf(SPACE "--%s%s=> %s\n", options[i].name, spacebuf,
-             options[i].value);
-      continue;
-    }
+    for (int e = 0; e < spacesz; e++)
+      spacebuf[e] = ' ';
+    spacebuf[spacesz - 1] = '\0';
 
-    printf(SPACE BOLD "--%s" RESET "%s=> %s\n" RESET, options[i].name, spacebuf,
-           options[i].desc);
+    printf(FG_BOLD "    --%s" FG_RESET "%s=> %s\n" FG_RESET, options[i].name, spacebuf, options[i].desc);
   }
 
-  info("Example: " BOLD
-       "massacr --no-color --recvport=1234 --limit=200 --ports=80,443" RESET);
-  info("For more examples and details checkout the README");
-
   printf("\n");
-  info("This program is free software: you can redistribute it and/or modify");
-  printf(
-      SPACE
-      "it under the terms of the GNU General Public License as published by\n");
-  printf(SPACE
-         "the Free Software Foundation, either version 3 of the License, or\n");
-  printf(SPACE "(at your option) any later version.\n");
-  printf("\n");
-  printf(SPACE
-         "This program is distributed in the hope that it will be useful\n");
-  printf(SPACE
-         "but WITHOUT ANY WARRANTY; without even the implied warranty of\n");
-  printf(SPACE
-         "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n");
-  printf(SPACE "GNU General Public License for more details.\n");
-  printf("\n");
-  printf(SPACE
-         "You should have received a copy of the GNU General Public License\n");
-  printf(SPACE "along with this program.  If not, see "
-               "<https://www.gnu.org/licenses/>.\n");
 }
 
 bool parse_opt(char *o) {
-  if (eq(o, "--help") || eq(o, "--h")) {
+  if (eq(o, "--help") || eq(o, "-h")) {
     print_help();
     exit(EXIT_SUCCESS);
   }
@@ -176,8 +118,8 @@ bool parse_opt(char *o) {
 
     switch (options[i].type) {
     case TYPE_BOOL:
-      if (neq(o, fullop))
-        goto UNKNOWN;
+      if (!eq(o, fullop))
+        goto unknown;
       options[i].value = "true";
       return true;
       break;
@@ -206,7 +148,7 @@ bool parse_opt(char *o) {
     }
   }
 
-UNKNOWN:
+unknown:
   error("Unknown option: %s", o);
   return false;
 }

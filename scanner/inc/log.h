@@ -6,13 +6,13 @@
 
 #include "../inc/op.h"
 
-#define RED "\x1b[31m"
-#define BOLD "\x1b[1m"
-#define BLUE "\x1b[34m"
-#define GRAY "\x1b[37m"
-#define RESET "\x1b[0m"
-#define GREEN "\x1b[32m"
-#define SPACE "                      "
+#define FG_RED "\x1b[31m"
+#define FG_BOLD "\x1b[1m"
+#define FG_BLUE "\x1b[34m"
+#define FG_GRAY "\x1b[37m"
+#define FG_RESET "\x1b[0m"
+#define FG_GREEN "\x1b[32m"
+#define FG_SPACE "                      "
 
 void info(const char *, ...);
 void error(const char *, ...);

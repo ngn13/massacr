@@ -26,41 +26,57 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "inc/api.h"
+#include "inc/db.h"
 #include "inc/log.h"
 #include "inc/net.h"
 #include "inc/op.h"
 #include "inc/util.h"
 
-recv_args_t *args = NULL;
-int ports_size, recvport, *ports;
+recv_args_t args;
+
+// https://www.iana.org/assignments/iana-ipv4-special-registry/iana-ipv4-special-registry.xhtml
+char *bad_nets[] = {
+    "0.0.0.0/8",
+    "10.0.0.0/8",
+    "100.64.0.0/10",
+    "127.0.0.0/8",
+    "169.254.0.0/16",
+    "172.16.0.0/12",
+    "192.0.0.0/24",
+    "192.0.0.0/29",
+    "192.0.0.8/32",
+    "192.0.0.9/32",
+    "192.0.0.170/32",
+    "192.0.0.171/32",
+    "192.0.2.0/24",
+    "192.31.196.0/24",
+    "192.52.193.0/24",
+    "192.88.99.0/24",
+    "192.168.0.0/16",
+    "192.175.48.0/24",
+    "198.18.0.0/15",
+    "198.51.100.0/24",
+    "203.0.113.0/24",
+    "240.0.0.0/4",
+    "255.255.255.255/32",
+    NULL,
+};
 
 void handle_int() {
-  info("Got interrupt, give me a second for cleanup");
+  info("Got interrupt, cleaning up");
 
-  if (NULL != args) {
-    pthread_mutex_lock(&net_lock);
-    args->should_run = false;
-    pthread_mutex_unlock(&net_lock);
-  }
+  pthread_mutex_lock(&net_lock);
+  args.should_run = false;
+  pthread_mutex_unlock(&net_lock);
 
+  net_free();
+  db_free();
   exit(1);
 }
 
-bool scan(char *ipstr) {
-  for (int i = 0; i < ports_size; i++) {
-    int cur = ports[i];
-
-    if (!net_syn(ipstr, cur, recvport)) {
-      error("Failed to send SYN to %s:%d", ipstr, ports[i]);
-      return false;
-    }
-  }
-
-  return true;
-}
-
 int main(int argc, char **argv) {
+  int ret = EXIT_FAILURE;
+
   // parse options and log them out
   for (int i = 1; i < argc; i++) {
     if (!parse_opt(argv[i])) {
@@ -68,116 +84,116 @@ int main(int argc, char **argv) {
     }
   }
 
-  info("massacr scanner %s: https://github.com/ngn13/massacr", VERSION);
+  info("massacr scanner (%s)", VERSION);
   info("Running with following options:");
   print_opts();
 
   // check if running as root
   if (0 != getuid()) {
     error("Cannot create raw sockets without root");
-    return EXIT_FAILURE;
+    return ret;
   }
 
-  // init threading and other stuff
+  // setup signal handler
   signal(SIGINT, handle_int);
-  if (!api_check())
-    return EXIT_FAILURE;
 
-  ports = parse_ports(get_str("ports"), &ports_size);
-  if (ports == NULL)
-    return EXIT_FAILURE;
-  if (ports_size > 1)
-    info("Scanning for %d ports", ports_size);
-  else
-    info("Scanning for 1 port", ports_size);
-  recvport = get_int("recvport");
-
-  // converts string non public IP ranges to Range struct
-  struct Range *ranges = NULL;
-  for (int i = 0; i < bad_range_size; i++) {
-    if (ranges == NULL)
-      ranges = malloc(sizeof(struct Range));
-    else
-      ranges = realloc(ranges, sizeof(struct Range) * (i + 1));
-
-    if (!get_range(&ranges[i], bad_ranges[i])) {
-      error("Invalid range: %s", bad_ranges[i]);
-      goto FAIL;
-    }
+  // check and parse params
+  int int_limit = get_int("limit");
+  if (int_limit <= 0) {
+    error("Invalid limit: %d", int_limit);
+    return ret;
   }
 
-  // start receiver thread
-  pthread_t recv;
-  args = malloc(sizeof(recv_args_t));
-  args->should_run = true;
-  args->port = recvport;
+  float limit = 1.0 / int_limit;
+  limit       = (limit) * 1000000;
 
-  pthread_mutex_init(&net_lock, NULL);
-  pthread_create(&recv, NULL, (void *)net_receive, args);
+  int recvport = get_int("recvport");
+  if (recvport <= 0 || recvport > UINT16_MAX) {
+    error("Invalid receiver port number: %d", recvport);
+    return ret;
+  }
+
+  int threads = get_int("threads");
+  if (threads <= 0) {
+    error("Invalid database thread count: %d", threads);
+    return ret;
+  }
+
+  uint16_t *ports = parse_ports(get_str("ports"));
+  if (ports == NULL)
+    return ret;
+
+  // convert non public IP ranges to ipv4_t struct
+  subnet_t *invalid      = NULL;
+  size_t    invalid_size = 0;
+
+  for (int i = 0; bad_nets[i] != NULL; i++)
+    invalid_size++;
+
+  subnet_t _invalid[invalid_size];
+  invalid = _invalid;
+
+  for (int i = 0; bad_nets[i] != NULL; i++) {
+    if (get_subnet(&invalid[i], bad_nets[i]))
+      continue;
+    error("Invalid IPv4 subnet: %s", bad_nets[i]);
+    goto fail;
+  }
+
+  // init stuff
+  if (!db_init(get_str("mongo")))
+    goto fail;
+
+  if (!net_init())
+    goto fail;
+
+  // start net receiver thread
+  pthread_t recv;
+  args.should_run = true;
+  args.threads    = threads;
+  args.port       = recvport;
+
+  pthread_create(&recv, NULL, (void *)net_receive, &args);
   pthread_detach(recv);
 
-  // calculating limits
-  float limit = 1.0 / get_int("limit");
-  limit = (limit) * 1000000;
+  // start looping over all the IPs
+  uint32_t current = 0;
 
-  // loops over all the IPs
-  uint8_t cur[4] = {1, 1, 1, 0};
-  while (cur[0] <= 255) {
-    while (cur[1] <= 255) {
-      while (cur[2] <= 255) {
-        while (cur[3] <= 255) {
-          if (skip_range(ranges, cur))
-            goto NEXT;
+  do {
+    // if the ip is in an invalid subnet, continue
+    if (subnet_contains(current, invalid, invalid_size))
+      continue;
 
-          char ipstr[16];
-          sprintf(ipstr, "%d.%d.%d.%d", cur[0], cur[1], cur[2], cur[3]);
+    // send syn packets
+    for (int i = 0; ports[i] != 0; i++)
+      net_syn(current, ports[i], recvport);
 
-          scan(ipstr);
-          usleep(limit);
-        NEXT:
-          if (cur[3] == 255) {
-            cur[3] = 0;
-            break;
-          }
-          cur[3]++;
-        }
-        if (cur[2] == 255) {
-          cur[2] = 0;
-          break;
-        }
-        cur[2]++;
-      }
-      info("Scan completed for the %d.%d.0.0/16 range", cur[0], cur[1]);
-      if (cur[1] == 255) {
-        cur[1] = 0;
-        break;
-      }
-      cur[1]++;
-    }
-    if (cur[0] == 255)
-      break;
-    cur[0]++;
-  }
+    // sleep according to the limit
+    usleep(limit);
+  } while ((current++) != UINT32_MAX);
 
+  // wait for receiver thread
   info("Scan completed!");
   info("Now waiting for receiver timeout (%ds)", get_int("timeout"));
   sleep(get_int("timeout"));
-  pthread_mutex_lock(&net_lock);
-  args->should_run = false;
-  pthread_mutex_unlock(&net_lock);
-  pthread_mutex_destroy(&net_lock);
 
-  free(ranges);
-  clean_ports(ports);
+  // set the return value
+  ret = EXIT_SUCCESS;
   info("Scan completed");
-  return EXIT_SUCCESS;
 
-FAIL:
+fail:
+  // stop the receiver thread
   pthread_mutex_lock(&net_lock);
-  args->should_run = false;
+  args.should_run = false;
   pthread_mutex_unlock(&net_lock);
+
+  // destroy the receiver mutex
   pthread_mutex_destroy(&net_lock);
-  free(ranges);
+
+  // free the resources and return
+  net_free();
+  db_free();
+
   clean_ports(ports);
-  return EXIT_FAILURE;
+  return ret;
 }

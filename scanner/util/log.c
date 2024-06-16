@@ -7,11 +7,10 @@
 #include "../inc/op.h"
 
 void get_time(char *res) {
-  time_t now = time(NULL);
-  struct tm tm = *localtime(&now);
+  time_t    now = time(NULL);
+  struct tm tm  = *localtime(&now);
 
-  sprintf(res, "%02d/%02d-%02d:%02d", tm.tm_mday, tm.tm_mon + 1, tm.tm_min,
-          tm.tm_hour);
+  sprintf(res, "%02d/%02d-%02d:%02d", tm.tm_mday, tm.tm_mon + 1, tm.tm_hour, tm.tm_min);
 }
 
 void info(const char *msg, ...) {
@@ -29,9 +28,9 @@ void info(const char *msg, ...) {
     return;
   }
 
-  printf(BOLD BLUE "[%s] INFO  # " RESET, tstr);
+  printf(FG_BOLD FG_BLUE "[%s] INFO  # " FG_RESET, tstr);
   vprintf(msg, args);
-  printf(RESET "\n");
+  printf(FG_RESET "\n");
   va_end(args);
 }
 
@@ -50,9 +49,9 @@ void error(const char *msg, ...) {
     return;
   }
 
-  printf(BOLD RED "[%s] ERROR # " RESET, tstr);
+  printf(FG_BOLD FG_RED "[%s] ERROR # " FG_RESET, tstr);
   vprintf(msg, args);
-  printf(RESET "\n");
+  printf(FG_RESET "\n");
 
   va_end(args);
 }
@@ -75,9 +74,9 @@ void debug(const char *msg, ...) {
     return;
   }
 
-  printf(BOLD GRAY "[%s] DEBUG # " RESET, tstr);
+  printf(FG_BOLD FG_GRAY "[%s] DEBUG # " FG_RESET, tstr);
   vprintf(msg, args);
-  printf(RESET "\n");
+  printf(FG_RESET "\n");
 
   va_end(args);
 }
