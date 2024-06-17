@@ -53,6 +53,11 @@
   }
 </script>
 
+<svelte:head>
+  <title>./massacr | {data.page}/{data.pages}</title>
+  <meta content="./massacr | {data.page}/{data.pages}" property="og:title" />
+</svelte:head>
+
 <main>
   <div class="info">
     <h1>./massacr</h1>

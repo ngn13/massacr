@@ -33,19 +33,19 @@ export async function load({ params, url }) {
       list: [],
       size: 0,
       page: 1,
-      pages: 0,
+      pages: 1,
       error: "Failed to access to the database",
     };
   }
 
   let query = { ipv4: { $exists: true } };
-  
+
   if(ipv4_list.length != 0 && port_list.length == 0)
     query = { ipv4: { $in: ipv4_list } }
 
   else if(ipv4_list.length == 0 && port_list.length != 0)
     query = { ports: { $in: port_list } }
-  
+
   else if(ipv4_list.length != 0 && port_list.length != 0)
     query = { ports: { $in: port_list }, ipv4: { $in: ipv4_list } }
 
