@@ -19,11 +19,14 @@
 
 */
 
+#include <arpa/inet.h>
+#include <errno.h>
 #include <pthread.h>
 #include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "inc/db.h"
@@ -94,9 +97,6 @@ int main(int argc, char **argv) {
     return ret;
   }
 
-  // setup signal handler
-  signal(SIGINT, handle_int);
-
   // check and parse params
   int int_limit = get_int("limit");
   if (int_limit <= 0) {
@@ -116,6 +116,14 @@ int main(int argc, char **argv) {
   int threads = get_int("threads");
   if (threads <= 0) {
     error("Invalid database thread count: %d", threads);
+    return ret;
+  }
+
+  char              *startpoint = get_str("startpoint");
+  struct sockaddr_in startaddr;
+
+  if (inet_pton(AF_INET, startpoint, &(startaddr.sin_addr)) != 1) {
+    error("Invalid starting point for scanning: %s", strerror(errno));
     return ret;
   }
 
@@ -141,9 +149,11 @@ int main(int argc, char **argv) {
   }
 
   // init stuff
+  info("Initializing database connection");
   if (!db_init(get_str("mongo")))
     goto fail;
 
+  info("Initializing networking");
   if (!net_init())
     goto fail;
 
@@ -156,8 +166,11 @@ int main(int argc, char **argv) {
   pthread_create(&recv, NULL, (void *)net_receive, &args);
   pthread_detach(recv);
 
+  // setup signal handler
+  signal(SIGINT, handle_int);
+
   // start looping over all the IPs
-  uint32_t current = 0;
+  uint32_t current = ntohl(startaddr.sin_addr.s_addr);
 
   do {
     // if the ip is in an invalid subnet, continue
@@ -186,9 +199,6 @@ fail:
   pthread_mutex_lock(&net_lock);
   args.should_run = false;
   pthread_mutex_unlock(&net_lock);
-
-  // destroy the receiver mutex
-  pthread_mutex_destroy(&net_lock);
 
   // free the resources and return
   net_free();

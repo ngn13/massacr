@@ -1,4 +1,4 @@
-name: Publish Docker Images 
+name: Publish Docker Images
 on:
   push:
     branches: ['main']
@@ -24,10 +24,10 @@ jobs:
 
       - name: 'Build Inventory Image'
         run: |
-          cd scanner 
+          cd scanner
           docker build . --tag ghcr.io/ngn13/massacr/scanner:latest
           docker push ghcr.io/ngn13/massacr/scanner:latest
-          
-          cd ../api
-          docker build . --tag ghcr.io/ngn13/massacr/api:latest
-          docker push ghcr.io/ngn13/massacr/api:latest
+
+          cd ../app
+          docker build . --tag ghcr.io/ngn13/massacr/app:latest
+          docker push ghcr.io/ngn13/massacr/app:latest

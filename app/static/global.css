@@ -1,0 +1,39 @@
+@import "https://www.nerdfonts.com/assets/css/webfont.css";
+
+:root {
+  --radius: 5px;
+
+  --dark-1: #000;
+  --dark-2: #101010;
+
+  --bright-1: #fff;
+  --bright-2: #afafaf;
+
+  --red-1: #e20206;
+  --red-2: #4c0002;
+}
+
+* {
+  font-family: monospace;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  overflow-x: hidden;
+  height: 100vh;
+  width: 100vw;
+  background: var(--dark-1);
+}
+
+::-webkit-scrollbar {
+  -webkit-appearance: none;
+  width: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: var(--radius);
+  background-color: rgba(50, 0, 0, .5);
+  -webkit-box-shadow: 0 0 1px rgba(255, 255, 255, .5);
+}
+

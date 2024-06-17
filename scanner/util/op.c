@@ -9,14 +9,15 @@
 #include "../inc/util.h"
 
 option_t options[] = {
-    {.name = "no-color", .type = TYPE_BOOL, .value = "false",                     .desc = "Do not print colored output"},
-    {.name = "recvport", .type = TYPE_INT,  .value = "1337",                      .desc = "Source port for TCP packets"},
-    {.name = "timeout",  .type = TYPE_INT,  .value = "600",                       .desc = "Timeout for receiver thread"},
-    {.name = "ports",    .type = TYPE_STR,  .value = "common",                    .desc = "Ports to scan for"          },
-    {.name = "limit",    .type = TYPE_INT,  .value = "20",                        .desc = "Packets per second limit"   },
-    {.name = "debug",    .type = TYPE_BOOL, .value = "false",                     .desc = "Enable debug output"        },
-    {.name = "mongo",    .type = TYPE_STR,  .value = "mongodb://localhost:27017", .desc = "MongoDB URL"                },
-    {.name = "threads",  .type = TYPE_INT,  .value = "10",                        .desc = "Database thread count"      },
+    {.name = "no-color",   .type = TYPE_BOOL, .value = "false",                     .desc = "Do not print colored output"},
+    {.name = "recvport",   .type = TYPE_INT,  .value = "1337",                      .desc = "Source port for TCP packets"},
+    {.name = "timeout",    .type = TYPE_INT,  .value = "600",                       .desc = "Timeout for receiver thread"},
+    {.name = "ports",      .type = TYPE_STR,  .value = "common",                    .desc = "Ports to scan for"          },
+    {.name = "limit",      .type = TYPE_INT,  .value = "20",                        .desc = "Packets per second limit"   },
+    {.name = "startpoint", .type = TYPE_STR,  .value = "0.0.0.0",                   .desc = "Address scanning startpoint"},
+    {.name = "mongo",      .type = TYPE_STR,  .value = "mongodb://localhost:27017", .desc = "MongoDB URL"                },
+    {.name = "threads",    .type = TYPE_INT,  .value = "10",                        .desc = "Database thread count"      },
+    {.name = "debug",      .type = TYPE_BOOL, .value = "false",                     .desc = "Enable debug output"        },
 };
 
 char *extract_value(char *o) {

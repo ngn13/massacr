@@ -1,6 +1,6 @@
-FROM alpine
+FROM archlinux
 
-RUN apk add --no-cache build-base libnet curl libnet-dev curl-dev
+RUN pacman -Syy --noconfirm make gcc pkgconf libnet mongo-c-driver
 
 WORKDIR /scanner
 
@@ -11,4 +11,4 @@ COPY util     ./util
 
 RUN make
 
-ENTRYPOINT ["/scanner/massacr"] 
+ENTRYPOINT ["/scanner/massacr"]

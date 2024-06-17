@@ -1,3 +1,4 @@
+#include <arpa/inet.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -201,4 +202,8 @@ void clean_ports(uint16_t *ports) {
   if (ports == common_ports)
     return;
   free(ports);
+}
+
+void uint32_to_ipstr(char *ipstr, uint32_t ip) {
+  snprintf(ipstr, INET_ADDRSTRLEN, "%d.%d.%d.%d", (ip >> 24) & 255, (ip >> 16) & 255, (ip >> 8) & 255, (ip & 255));
 }

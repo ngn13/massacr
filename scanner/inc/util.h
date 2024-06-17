@@ -18,3 +18,4 @@ void      clean_ports(uint16_t *);
 
 bool get_subnet(subnet_t *, char *);
 bool subnet_contains(uint32_t, subnet_t *, size_t);
+void uint32_to_ipstr(char *, uint32_t);

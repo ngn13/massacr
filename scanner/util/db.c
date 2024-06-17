@@ -8,20 +8,23 @@
 
 #include "../inc/db.h"
 #include "../inc/log.h"
+#include "../inc/util.h"
 
 mongoc_client_pool_t *pool = NULL;
 
 bool db_init(char *mongo) {
   mongoc_client_t      *client;
   mongoc_collection_t  *collection;
-  mongoc_index_model_t *im;
+  mongoc_index_model_t *im = NULL;
   bson_error_t          err;
+  mongoc_server_api_t  *api = NULL;
   mongoc_uri_t         *uri = NULL;
   bson_t               *cmd = NULL, *keys = NULL, *opts = NULL, reply;
   bool                  ret = false;
 
-  // init mongoc
+  // init mongoc, disable logging
   mongoc_init();
+  mongoc_log_set_handler(NULL, NULL);
 
   // parse the URI
   uri = mongoc_uri_new_with_error(mongo, &err);
@@ -30,6 +33,16 @@ bool db_init(char *mongo) {
     goto fail;
   }
 
+  // 5 second timeout
+  if (!mongoc_uri_set_option_as_int64(uri, "serverSelectionTimeoutMS", 5000))
+    error("Failed to set serverSelectionTimeoutMS");
+
+  if (!mongoc_uri_set_option_as_int64(uri, "connectTimeoutMS", 5000))
+    error("Failed to set connectTimeoutMS");
+
+  if (!mongoc_uri_set_option_as_int64(uri, "socketTimeoutMS", 5000))
+    error("Failed to set socketTimeoutMS");
+
   // setup the client pool
   pool = mongoc_client_pool_new(uri);
   if (NULL == pool) {
@@ -37,6 +50,18 @@ bool db_init(char *mongo) {
     goto fail;
   }
   mongoc_client_pool_set_appname(pool, "massacr-scanner");
+  mongoc_client_pool_set_error_api(pool, 2);
+
+  api = mongoc_server_api_new(MONGOC_SERVER_API_V1);
+  if (NULL == api) {
+    error("Failed to create mongo API");
+    goto fail;
+  }
+
+  if (!mongoc_client_pool_set_server_api(pool, api, &err)) {
+    error("Failed to set the server API: %s", err.message);
+    goto fail;
+  }
 
   // pop and setup the client
   client = mongoc_client_pool_pop(pool);
@@ -45,12 +70,23 @@ bool db_init(char *mongo) {
     goto fail;
   }
 
+  // get the collection
   collection = mongoc_client_get_collection(client, "massacr", "data");
   if (NULL == collection) {
     error("Failed to access data collection");
     goto fail;
   }
 
+  // ping the "admin" database
+  cmd = BCON_NEW("ping", BCON_INT32(1));
+  if (!mongoc_client_command_simple(client, "admin", cmd, NULL, &reply, &err)) {
+    error("Failed to ping to admin database: %s", err.message);
+    bson_destroy(&reply);
+    goto fail;
+  }
+  bson_destroy(&reply);
+
+  // make the ipv4 index unique
   keys = BCON_NEW("ipv4", BCON_INT32(1));
   opts = BCON_NEW("unique", BCON_BOOL(true));
 
@@ -60,16 +96,13 @@ bool db_init(char *mongo) {
     goto fail;
   }
 
-  // ping the "admin" database
-  cmd = BCON_NEW("ping", BCON_INT32(1));
-  if (!mongoc_client_command_simple(client, "admin", cmd, NULL, &reply, &err))
-    error("Failed to ping to admin database: %s", err.message);
-  else
-    ret = true;
-  bson_destroy(&reply);
+  ret = true;
 
   // cleanup
 fail:
+  if (NULL != api)
+    mongoc_server_api_destroy(api);
+
   if (NULL != im)
     mongoc_index_model_destroy(im);
 
@@ -113,13 +146,7 @@ void db_add(void *ap) {
   bson_iter_t           iter;
   bson_t               *query = NULL, *doc = NULL, child;
 
-  snprintf(ipstr,
-      INET_ADDRSTRLEN,
-      "%d.%d.%d.%d",
-      (args->ipv4 >> 24) & 255,
-      (args->ipv4 >> 16) & 255,
-      (args->ipv4 >> 8) & 255,
-      (args->ipv4 & 255));
+  uint32_to_ipstr(ipstr, args->ipv4);
 
   client     = mongoc_client_pool_pop(pool);
   collection = mongoc_client_get_collection(client, "massacr", "data");

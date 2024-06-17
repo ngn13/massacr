@@ -1,99 +1,93 @@
-# massacr 🩸 mass IP/port scanner toolkit
-An extensible toolkit for scanning the internet for TCP ports using SYN packets. 
-Consists of different tools and servers that interact which each other:
-```
-Scanner -> API -> Handler -> MongoDB -> Mongo-Express
-```
-- [Scanner](scanner/): SYN port scanner written in C, sends requests to the API with curl
-- [API](api/lib): Simple web API written with Flask, provides data to threaded handler
-- [Handler](api/main.py): A simple extensible Python function to process provided data. When its done processing, 
-it saves the processed data to the MongoDB database. Default handler gathers extra information about HTTP(S) servers.
-- [MongoDB](https://www.mongodb.com/what-is-mongodb): NoSQL database for storing all the data 
-- [Mongo-Express](https://github.com/mongo-express/mongo-express): Web-based MongoDB admin interface to interact with the data
+# massacr 🩸 mass IPv4/port scanner toolkit
+
+![](assets/web.png)
+
+---
+
+An extensible toolkit for scanning the internet for TCP ports using SYN packets.
+
+## How it works?
+The core feature of massacr is the [scanner](scanner/), a program that sends massive
+amounts of TCP SYN packets to different hosts on the internet.
+
+When a host receives a TCP SYN packet on an open port, it sends back a TCP SYN+ACK
+packet. The scanner has a seperate thread, listening for these SYN+ACKs. When a SYN+ACK
+is received, the scanner adds the IPv4 and the port to a MongoDB database. You can then
+process this information to discover different services and hosts on the internet.
+
+massacr also includes a [simple web app](/app) that you can use to easily query the MongoDB
+database for different hosts and ports.
 
 ## Deploy
-Since there are multiple components of massacr, easiest 
-way to deploy is to use `docker-compose`, here is an example configuration:
-```yml
+To deploy the massacr toolkit with the scanner, web UI and mongo DB, you can use docker-compose:
+```yaml
 version: "3"
 services:
   scanner:
     image: ghcr.io/ngn13/massacr/scanner
-    command: --url=http://api:5000 --limit=100
+    command: --mongo=mongodb://db:27017 --limit=100
     depends_on:
-      - api 
+      - db
 
-  api:
-    image: ghcr.io/ngn13/massacr/api
+  app:
+    image: ghcr.io/ngn13/massacr/app
     restart: unless-stopped
-    environment:
-      - API_PASSWORD=default
-      - API_MONGO=mongodb://mongo
-    depends_on:
-      - mongo
-
-  mongo:
-    image: mongo 
-    volumes:
-      - ./db:/data/db:rw
-
-  interface:
-    image: mongo-express
-    depends_on:
-      - mongo
-    environment:
-      - ME_CONFIG_MONGODB_URL=mongodb://mongo
     ports:
-      - "127.0.0.1:8081:8081"
+      - 127.0.0.1:8081:3000
+    environment:
+      - MONGO=mongodb://db:27017
+    depends_on:
+      - db
+
+  db:
+    image: mongo
+    volumes:
+      - ./data:/data/db:rw
 ```
 after deploying the containers, you can access the web interface at `http://localhost:8081`.
+You can also add your own tools and scripts to the compose file.
 
 ## Configuration
-### Scanner 
+### Scanner
 You can list all the options with `--help`:
 ```
---no-color => Do not print colored output
---recvport => Source port for TCP packets
---timeout  => Timeout for receiver thread
---ports    => Ports to scan for
---limit    => Packets per second limit
---debug    => Enable debug output
---url      => API HTTP(S) URL
---password => API password
+--no-color   => Do not print colored output
+--recvport   => Source port for TCP packets
+--timeout    => Timeout for receiver thread
+--ports      => Ports to scan for
+--limit      => Packets per second limit
+--startpoint => Address scanning startpoint
+--mongo      => MongoDB URL
+--threads    => Database thread count
+--debug      => Enable debug output
 ```
 
 - Use the `--<option>=<value>` syntax to set options.
-- For the `--ports` option, you can specify a single port, or you can specify ranges with `-` (`1-100`) and multiple ports with `,` (`80,443,1234`)
+- For the `--ports` option, you can specify a single port, or you can specify ranges with `-` (`1-100`) and multiple ports with `,` (`80,443,1234`), the default option
+is `common`, this contains a list of common ports, which you can check out in the [util.c file](scanner/util/util.c).
 - Timeout is the time to wait after sending all the packets (in seconds), as the receiver thread may fell behind
-- `--limit` is set to 20 by default, **which is pretty slow, so you should increase it.**
-
-> [!CAUTION]
-> Do not go overkill on the `--limit` option, you will most likely end up using all the bandwidth 
-> and crash the entire network.
+- `--limit` is set to 20 by default, **which is pretty slow, so you should increase it.** However do not go overkill! Your router or your bandwidth may not be able handle
+all the active TCP connections, and you may end up crashing the entire network.
 
 Defaults for all the options are:
 ```
-no-color => false
-recvport => 13421
-timeout  => 10
-ports    => common
-limit    => 20
-debug    => false
-url      => http://localhost:5000 
-password => default
+no-color   => false
+recvport   => 1337
+timeout    => 600
+ports      => common
+limit      => 20
+startpoint => 0.0.0.0
+mongo      => mongodb://localhost:27017
+threads    => 10
+debug      => false
 ```
 
-### API/Handler
-Default API has few different options:
-- `API_MONGO`: MongoDB URL
-- `API_PASSWORD`: Password for API access
-- `API_USE_LOCAL`: Set to 1 if you want API to listen only on the local interface (127.0.0.1)
+### App
+Web app has just a single option:
+- `MONGO`: MongoDB URL
 
-However you can modify these options and the handler itself by modifying [`api/main.py`](api/main.py).
-If you know a bit of python you can easily write your own handler for your specific use case. All the code 
-is well commented but feel free to create issues to ask questions if you are stuck.
-
-## Resources 
+## Resources
 Here are some different resources that I used during the development:
 - [SYN scanning](https://nmap.org/book/synscan.html) (massacr does not exactly use SYN scan, it does not send RST packets)
 - [libnet](https://github.com/libnet/libnet) (provides an easy way to build and send raw network packets)
+- [mongo-c-driver](https://www.mongodb.com/docs/languages/c/c-driver/current/libmongoc/tutorial/)

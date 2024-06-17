@@ -8,10 +8,10 @@ prefix  = /usr
 CC      = gcc
 
 massacr: $(CSRCS) $(HEADERS)
-	$(CC) $(CFLAGS) $(CSRCS) -o $@ -DVERSION=\"${VERSION}\" $(LIBS) 
+	$(CC) $(CFLAGS) $(CSRCS) -o $@ -DVERSION=\"${VERSION}\" $(LIBS)
 
 install:
-	install -v -m755 massacr $(DESTDIR)$(prefix)/bin/massacr 
+	install -v -m755 massacr $(DESTDIR)$(prefix)/bin/massacr
 
 uninstall:
 	rm -v $(DESTDIR)$(prefix)/bin/massacr

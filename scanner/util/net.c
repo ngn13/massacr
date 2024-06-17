@@ -10,8 +10,8 @@
 #include "../inc/net.h"
 #include "../inc/pool.h"
 
-pthread_mutex_t net_lock;
-libnet_t       *ctx = NULL;
+pthread_mutex_t net_lock = PTHREAD_MUTEX_INITIALIZER;
+libnet_t       *ctx      = NULL;
 
 bool net_init() {
   if (pthread_mutex_init(&net_lock, NULL) != 0) {
@@ -46,7 +46,6 @@ void net_receive(void *ap) {
   }
 
   // setup args used for "recvfrom"
-  struct timeval     timeout;
   struct sockaddr_in addr;
   socklen_t          addrlen = sizeof(addr);
 
@@ -82,7 +81,7 @@ void net_receive(void *ap) {
     // send the info to the database
     db_args_t *data = malloc(sizeof(db_args_t));
     data->port      = htons(tcph->source);
-    data->ipv4      = addr.sin_addr.s_addr;
+    data->ipv4      = htonl(addr.sin_addr.s_addr);
     pool_add(pool, (void *)db_add, data);
   }
 
@@ -106,7 +105,7 @@ bool net_syn(uint32_t ip, int port, int recvport) {
   }
 
   r = libnet_build_ipv4(
-      LIBNET_IPV4_H + LIBNET_TCP_H, 0, 242, 0, 64, IPPROTO_TCP, 0, libnet_get_ipaddr4(ctx), ip, NULL, 0, ctx, 0);
+      LIBNET_IPV4_H + LIBNET_TCP_H, 0, 242, 0, 64, IPPROTO_TCP, 0, libnet_get_ipaddr4(ctx), ntohl(ip), NULL, 0, ctx, 0);
 
   if (r < 0) {
     error("Failed to build IPv4 header: %s", libnet_geterror(ctx));
