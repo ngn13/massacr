@@ -5,7 +5,7 @@ COPY . /app
 
 RUN npm install && npm run build
 
-FROM oven/bun:1.1 as main
+FROM oven/bun:1.2 as main
 
 WORKDIR /app
 
